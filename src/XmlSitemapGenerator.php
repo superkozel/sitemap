@@ -9,23 +9,18 @@ class XmlSitemapGenerator
     public const FREQ_WEEKLY = 'weekly';
     public const FREQ_DAILY = 'daily';
 
-    private string $host;
-    private bool $secure = false;
+    protected string $host;
     protected XMLWriter $writer;
 
-    public static function create(): static
+    public static function create(string $host): static
     {
-        return new XmlSitemapGenerator();
+        return new static($host);
     }
 
-    public function __construct()
+    public function __construct(string $host)
     {
+        $this->host = $host;
         $this->writer = new XMLWriter();
-    }
-
-    public function protocol(): string
-    {
-        return $this->isSecure() ? 'https' : 'http';
     }
 
     public function add(
@@ -37,7 +32,7 @@ class XmlSitemapGenerator
         $this->writer->startElement('url');
         $this->writer->writeElement('loc', $this->getHost().$loc);
         if ($priority) {
-            $this->writer->writeElement('priority', $priority);
+            $this->writer->writeElement('priority', (string)round($priority, 2));
         }
         if ($changefreq) {
             $this->writer->writeElement('changefreq', $changefreq);
@@ -45,7 +40,7 @@ class XmlSitemapGenerator
         foreach ($images as $image) {
             $this->writer->startElement('image:image');
 
-            $this->writer->writeElement('image:loc', $this->protocol().'://'.$this->getHost().$image['loc']);
+            $this->writer->writeElement('image:loc', $this->getHost().$image['loc']);
 
             if (!empty($image['title'])) {
                 $this->writer->writeElement('image:title', $image['title']);
@@ -98,18 +93,6 @@ class XmlSitemapGenerator
     public function getHost(): string
     {
         return $this->host;
-    }
-
-    public function isSecure(): bool
-    {
-        return $this->secure;
-    }
-
-    public function setSecure(bool $secure): static
-    {
-        $this->secure = $secure;
-
-        return $this;
     }
 
     public function getWriter(): XMLWriter
