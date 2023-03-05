@@ -30,7 +30,9 @@ class XmlSitemapGenerator
         array $images = []
     ): static {
         $this->writer->startElement('url');
-        $this->writer->writeElement('loc', $this->getHost().$loc);
+        $this->writer->startElement('loc');
+        $this->writer->writeRaw($this->getHost().$loc);
+        $this->writer->endElement();
         if ($priority) {
             $this->writer->writeElement('priority', (string)round($priority, 2));
         }
