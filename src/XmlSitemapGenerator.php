@@ -11,18 +11,19 @@ class XmlSitemapGenerator
 
     protected string $host;
     protected XMLWriter $writer;
+    private ?string $filePath;
 
-    public static function create(string $host): static
+    public static function create(string $host, ?string $filePath = null): static
     {
-        return new static($host);
+        return new static($host, $filePath);
     }
 
-    public function __construct(string $host)
+    public function __construct(string $host, ?string $filePath = null)
     {
         $this->host = $host;
         $this->writer = new XMLWriter();
+        $this->filePath = $filePath;
     }
-
     public function add(
         string $loc,
         float $priority = null,
@@ -52,14 +53,21 @@ class XmlSitemapGenerator
         }
         $this->writer->endElement();
 
-        echo $this->writer->outputMemory();
+        if ($this->filePath === null) {
+            echo $this->writer->outputMemory();
+        }
 
         return $this;
     }
 
     public function start(): static
     {
-        $this->writer->openMemory();
+        if ($this->filePath !== null) {
+            $this->writer->openURI($this->filePath);
+        }
+        else {
+            $this->writer->openMemory();
+        }
 
         $this->writer->startDocument('1.0', 'UTF-8');
 
@@ -69,18 +77,19 @@ class XmlSitemapGenerator
         $this->writer->writeAttribute('xmlns', 'https://www.sitemaps.org/schemas/sitemap/0.9');
         $this->writer->writeAttribute('xmlns:image', 'https://www.google.com/schemas/sitemap-image/1.1');
 
-        echo $this->writer->outputMemory();
-
         return $this;
     }
 
     public function end(): static
     {
         $this->writer->endElement();
-
         $this->writer->endDocument();
 
-        echo $this->writer->outputMemory();
+        if ($this->filePath) {
+            $this->writer->flush();
+        } else {
+            echo $this->writer->outputMemory();
+        }
 
         return $this;
     }
